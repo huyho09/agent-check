@@ -7,7 +7,8 @@ import time
 # --- Configuration ---
 API_URL = "https://cx.bosch-so.com/rexroth-chat-DC-ready"
 API_NAME = "GP_Bosch_Rexroth_Chat_DC_VAG"
-CSV_FILE = "agent_availability_log.csv"
+# Updated to use result.csv as requested
+CSV_FILE = "result.csv" 
 CHECK_INTERVAL_SECONDS = 900  # 15 minutes
 
 def check_agent_availability():
@@ -77,14 +78,3 @@ if __name__ == "__main__":
     # This main execution block is what gets run by the GitHub Action.
     # It performs a single check and logs the result.
     check_agent_availability()
-
-    # --- For local continuous running, you can uncomment the following loop ---
-    # print("Starting continuous monitoring. Press Ctrl+C to stop.")
-    # try:
-    #     while True:
-    #         check_agent_availability()
-    #         print(f"Sleeping for {CHECK_INTERVAL_SECONDS / 60} minutes...")
-    #         time.sleep(CHECK_INTERVAL_SECONDS)
-    # except KeyboardInterrupt:
-    #     print("\nMonitoring stopped.")
-

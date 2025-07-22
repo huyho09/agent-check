@@ -18,7 +18,7 @@ jobs:
 
     steps:
       # Step 1: Check out your repository code
-      # This downloads your repository's code so the runner can access it.
+      # This downloads your repository's code, including the existing result.csv.
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -37,18 +37,19 @@ jobs:
           pip install requests
 
       # Step 4: Run the Python script
-      # This executes your script, which will create the agent_availability_log.csv file.
+      # This executes your script, which will append a new row to result.csv.
       - name: Run agent availability check
-        run: python main.py
+        run: python check_availability.py
 
-      # Step 5: Upload the CSV file as an artifact
-      # This step takes the generated CSV file and makes it available for download.
-      - name: Upload agent availability log
-        uses: actions/upload-artifact@v4
-        with:
-          # Name of the artifact to be uploaded.
-          name: agent-availability-log
-          # Path to the file(s) to be uploaded.
-          path: agent_availability_log.csv
-          # The retention period for the artifact. 0 means default (90 days).
-          retention-days: 180
+      # Step 5: Commit and push the updated CSV file
+      # This step saves the updated result.csv back to your repository.
+      - name: Commit and push if changed
+        run: |
+          # Configure git with the bot's identity
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          # Add the result file to the staging area
+          git add result.csv
+          # Check if there are any changes to commit. If so, commit and push.
+          # This prevents creating empty commits if the script fails or the file doesn't change.
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update agent availability results" && git push)
