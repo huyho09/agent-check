@@ -1,0 +1,52 @@
+# .github/workflows/main.yml
+
+name: Agent Availability Checker
+
+on:
+  # --- Trigger the workflow every 15 minutes ---
+  schedule:
+    - cron: '*/15 * * * *'
+  
+  # --- Allows you to run this workflow manually from the Actions tab ---
+  workflow_dispatch:
+
+jobs:
+  check-availability:
+    runs-on: ubuntu-latest
+
+    steps:
+      # --- 1. Check out the repository code ---
+      # This step downloads your repository code into the runner.
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # --- 2. Set up Python ---
+      # This step installs a specific version of Python.
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' # You can use other versions like 3.8, 3.9, etc.
+
+      # --- 3. Install dependencies ---
+      # This step installs the 'requests' library required by the Python script.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      # --- 4. Run the Python script ---
+      # This executes your script to check the API and update the CSV.
+      - name: Run agent availability check
+        run: python your_script_name.py # IMPORTANT: Replace 'your_script_name.py' with the actual name of your Python file.
+
+      # --- 5. Commit and push the updated CSV file ---
+      # This step commits the changes made to the CSV file back to your repository.
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add agent_availability_log.csv
+          # The following command checks if there are any changes to commit.
+          # If there are, it commits and pushes them. If not, it does nothing.
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update agent availability log" && git push)
+
