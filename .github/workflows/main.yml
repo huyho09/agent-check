@@ -1,52 +1,54 @@
-# .github/workflows/main.yml
+# This file goes in .github/workflows/main.yml in your repository.
 
 name: Agent Availability Checker
 
 on:
-  # --- Trigger the workflow every 15 minutes ---
+  # Trigger the workflow to run on a schedule.
+  # This cron expression means "at every 15th minute".
   schedule:
     - cron: '*/15 * * * *'
   
-  # --- Allows you to run this workflow manually from the Actions tab ---
+  # This allows you to run the workflow manually from the GitHub Actions tab.
   workflow_dispatch:
 
 jobs:
   check-availability:
+    # The type of virtual machine to run the job on.
     runs-on: ubuntu-latest
 
     steps:
-      # --- 1. Check out the repository code ---
-      # This step downloads your repository code into the runner.
+      # Step 1: Check out your repository code
+      # This downloads your repository's code so the runner can access it.
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # --- 2. Set up Python ---
-      # This step installs a specific version of Python.
+      # Step 2: Set up the Python environment
+      # This installs Python on the runner.
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10' # You can use other versions like 3.8, 3.9, etc.
+          python-version: '3.10'
 
-      # --- 3. Install dependencies ---
-      # This step installs the 'requests' library required by the Python script.
+      # Step 3: Install necessary Python libraries
+      # This installs the 'requests' library that the script needs to make API calls.
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests
 
-      # --- 4. Run the Python script ---
-      # This executes your script to check the API and update the CSV.
+      # Step 4: Run the Python script
+      # This executes your script, which will create the agent_availability_log.csv file.
       - name: Run agent availability check
-        run: python main.py # IMPORTANT: Replace 'your_script_name.py' with the actual name of your Python file.
+        run: python main.py
 
-      # # --- 5. Commit and push the updated CSV file ---
-      # # This step commits the changes made to the CSV file back to your repository.
-      # - name: Commit and push if changed
-      #   run: |
-      #     git config --global user.name 'github-actions[bot]'
-      #     git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-      #     git add agent_availability_log.csv
-      #     # The following command checks if there are any changes to commit.
-      #     # If there are, it commits and pushes them. If not, it does nothing.
-      #     git diff --quiet && git diff --staged --quiet || (git commit -m "Update agent availability log" && git push)
-
+      # Step 5: Upload the CSV file as an artifact
+      # This step takes the generated CSV file and makes it available for download.
+      - name: Upload agent availability log
+        uses: actions/upload-artifact@v4
+        with:
+          # Name of the artifact to be uploaded.
+          name: agent-availability-log
+          # Path to the file(s) to be uploaded.
+          path: agent_availability_log.csv
+          # The retention period for the artifact. 0 means default (90 days).
+          retention-days: 180
