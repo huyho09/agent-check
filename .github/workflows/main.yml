@@ -39,7 +39,7 @@ jobs:
       # Step 4: Run the Python script
       # This executes your script, which will append a new row to result.csv.
       - name: Run agent availability check
-        run: python check_availability.py
+        run: python main.py
 
       # Step 5: Commit and push the updated CSV file
       # This step saves the updated result.csv back to your repository.
