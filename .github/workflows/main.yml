@@ -16,6 +16,11 @@ jobs:
     # The type of virtual machine to run the job on.
     runs-on: ubuntu-latest
 
+    # --- FIX: Grant write permissions to the job ---
+    # The default GITHUB_TOKEN needs explicit permission to push to the repository.
+    permissions:
+      contents: write
+
     steps:
       # Step 1: Check out your repository code
       # This downloads your repository's code, including the existing result.csv.
