@@ -18,12 +18,14 @@ def check_agent_availability():
 
     try:
         # --- 1. Make the API Call ---
+        # Set a timeout to prevent the script from hanging indefinitely.
         response = requests.get(API_URL, timeout=30)
         response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
 
         # --- 2. Parse the Response ---
+        # We assume the response is JSON.
         data = response.json()
-        available_agents = data.get(API_NAME, 0) # Default to 0 if key is not found
+        available_agents = data.get(API_NAME, 0) # Default to 0 if the key is not found
 
         print(f"[{datetime.now()}] Successfully fetched data. Available agents: {available_agents}")
 
@@ -46,21 +48,22 @@ def log_to_csv(api_name, agent_count):
     Appends a new record to the CSV log file.
     Creates the file and adds a header if it doesn't exist.
     """
-    # --- Check if file exists to write header ---
+    # Check if the CSV file already exists to determine if we need to write the header.
     file_exists = os.path.isfile(CSV_FILE)
 
     try:
+        # Open the file in 'append' mode. This creates the file if it doesn't exist.
         with open(CSV_FILE, mode='a', newline='', encoding='utf-8') as csv_file:
-            # --- Define CSV columns ---
+            # Define the column names for the CSV file.
             fieldnames = ['Timestamp', 'APIName', 'AvailableAgents']
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
 
-            # --- Write header if file is new ---
+            # If the file did not exist before opening, write the header row.
             if not file_exists:
                 writer.writeheader()
                 print(f"[{datetime.now()}] Created new log file: {CSV_FILE}")
 
-            # --- Write the data row ---
+            # Write the actual data row.
             writer.writerow({
                 'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 'APIName': api_name,
@@ -71,17 +74,17 @@ def log_to_csv(api_name, agent_count):
 
 
 if __name__ == "__main__":
-    # This block allows the script to be run directly.
-    # For the GitHub Action, we will call the function directly.
-    # For local testing, you can uncomment the loop.
-    
-    # --- For GitHub Actions, we just need one run ---
+    # This main execution block is what gets run by the GitHub Action.
+    # It performs a single check and logs the result.
     check_agent_availability()
 
-    # --- For local continuous running, uncomment the following lines ---
+    # --- For local continuous running, you can uncomment the following loop ---
     # print("Starting continuous monitoring. Press Ctrl+C to stop.")
-    # while True:
-    #     check_agent_availability()
-    #     print(f"Sleeping for {CHECK_INTERVAL_SECONDS / 60} minutes...")
-    #     time.sleep(CHECK_INTERVAL_SECONDS)
+    # try:
+    #     while True:
+    #         check_agent_availability()
+    #         print(f"Sleeping for {CHECK_INTERVAL_SECONDS / 60} minutes...")
+    #         time.sleep(CHECK_INTERVAL_SECONDS)
+    # except KeyboardInterrupt:
+    #     print("\nMonitoring stopped.")
 

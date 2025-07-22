@@ -37,16 +37,16 @@ jobs:
       # --- 4. Run the Python script ---
       # This executes your script to check the API and update the CSV.
       - name: Run agent availability check
-        run: python your_script_name.py # IMPORTANT: Replace 'your_script_name.py' with the actual name of your Python file.
+        run: python main.py # IMPORTANT: Replace 'your_script_name.py' with the actual name of your Python file.
 
-      # --- 5. Commit and push the updated CSV file ---
-      # This step commits the changes made to the CSV file back to your repository.
-      - name: Commit and push if changed
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add agent_availability_log.csv
-          # The following command checks if there are any changes to commit.
-          # If there are, it commits and pushes them. If not, it does nothing.
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update agent availability log" && git push)
+      # # --- 5. Commit and push the updated CSV file ---
+      # # This step commits the changes made to the CSV file back to your repository.
+      # - name: Commit and push if changed
+      #   run: |
+      #     git config --global user.name 'github-actions[bot]'
+      #     git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      #     git add agent_availability_log.csv
+      #     # The following command checks if there are any changes to commit.
+      #     # If there are, it commits and pushes them. If not, it does nothing.
+      #     git diff --quiet && git diff --staged --quiet || (git commit -m "Update agent availability log" && git push)
 
