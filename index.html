@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Availability Report</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Table CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.22.4/dist/bootstrap-table.min.css">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1200px;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-radius: 0.75rem;
+        }
+        .card-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 1.5rem;
+        }
+        .card-title {
+            margin: 0;
+            font-weight: 600;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        #toolbar {
+            padding: 1rem 1.5rem;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .fixed-table-toolbar .search {
+            display: none; /* Hide default search if not needed */
+        }
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 0.75rem;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container my-5">
+        <div class="card position-relative">
+            <div class="card-header">
+                <h2 class="card-title">Agent Availability Report</h2>
+            </div>
+
+            <!-- Toolbar for Filters -->
+            <div id="toolbar">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="dateStart" class="form-label">Start Date</label>
+                        <input type="date" id="dateStart" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="dateEnd" class="form-label">End Date</label>
+                        <input type="date" id="dateEnd" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="responseFilter" class="form-label">Response</label>
+                        <select id="responseFilter" class="form-select">
+                            <option value="all" selected>Show All</option>
+                            <option value="available">Agents Available (>0)</option>
+                            <option value="unavailable">No Agents Available</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 d-grid">
+                        <button id="resetFilters" class="btn btn-secondary">Reset</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading Indicator -->
+            <div id="loading" class="loading-overlay">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="table-responsive">
+                <table
+                  id="table"
+                  data-toolbar="#toolbar"
+                  data-toggle="table"
+                  data-pagination="true"
+                  data-page-size="25"
+                  data-page-list="[10, 25, 50, 100, All]"
+                  data-search="true"
+                  data-sort-name="Timestamp"
+                  data-sort-order="desc"
+                  data-show-refresh="true"
+                  data-show-columns="true"
+                  data-show-columns-toggle-all="true"
+                  data-show-export="true"
+                  data-export-types="['csv', 'txt', 'excel']"
+                  data-mobile-responsive="true"
+                  data-check-on-init="true">
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <!-- Bootstrap Table JS -->
+    <script src="https://unpkg.com/bootstrap-table@1.22.4/dist/bootstrap-table.min.js"></script>
+    <!-- Bootstrap Table Export extension -->
+    <script src="https://unpkg.com/bootstrap-table@1.22.4/dist/extensions/export/bootstrap-table-export.min.js"></script>
+    <script src="https://unpkg.com/tableexport.jquery.plugin/tableExport.min.js"></script>
+
+
+    <script>
+        // IMPORTANT: Replace this URL with the raw URL of your result.csv file on GitHub.
+        const CSV_URL = 'https://raw.githubusercontent.com/Bosch-Rexroth-OCS/agent-check/main/result.csv';
+
+        let originalData = [];
+        const $table = $('#table');
+        const $loading = $('#loading');
+
+        $(function() {
+            // Initialize the table with columns but no data yet.
+            $table.bootstrapTable({
+                columns: [
+                    { field: 'Timestamp', title: 'Timestamp', sortable: true },
+                    { field: 'APIName', title: 'API Name', sortable: true },
+                    { field: 'AvailableAgents', title: 'Available Agents', sortable: true, align: 'center' }
+                ]
+            });
+
+            // Fetch and load data from GitHub
+            loadData();
+
+            // --- Event Listeners for Filters ---
+            $('#dateStart, #dateEnd, #responseFilter').on('change', applyFilters);
+            $('#resetFilters').on('click', resetAllFilters);
+        });
+
+        function loadData() {
+            $loading.show();
+            // Add a cache-busting parameter to the URL to prevent the browser from loading a stale file.
+            const cacheBuster = new Date().getTime();
+            const urlWithCacheBuster = `${CSV_URL}?t=${cacheBuster}`;
+
+            // Use PapaParse to fetch and parse the CSV from the URL
+            Papa.parse(urlWithCacheBuster, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.data && results.data.length > 0) {
+                        originalData = results.data;
+                        $table.bootstrapTable('load', originalData);
+                    } else if (results.errors && results.errors.length > 0) {
+                        console.error("PapaParse errors:", results.errors);
+                        alert("The data file appears to be malformed. Please check the CSV file content.");
+                    } else {
+                        originalData = [];
+                        $table.bootstrapTable('load', []);
+                        console.log("CSV file is empty or contains only headers.");
+                    }
+                    $loading.hide();
+                },
+                error: function(err, file) {
+                    console.error("Error fetching or parsing CSV:", err);
+                    alert("Could not load the data file from GitHub. This can happen due to a network error, or if the repository is private or the URL is incorrect.");
+                    $loading.hide();
+                }
+            });
+        }
+
+        function applyFilters() {
+            const startDate = $('#dateStart').val();
+            const endDate = $('#dateEnd').val();
+            const responseType = $('#responseFilter').val();
+
+            // Create date objects for comparison. Add a day to endDate to make it inclusive.
+            const start = startDate ? new Date(startDate) : null;
+            const end = endDate ? new Date(new Date(endDate).setDate(new Date(endDate).getDate() + 1)) : null;
+
+            const filteredData = originalData.filter(row => {
+                // 1. Date Filtering
+                const rowDate = new Date(row.Timestamp);
+                if (start && rowDate < start) return false;
+                if (end && rowDate >= end) return false;
+
+                // 2. Response Filtering
+                if (responseType === 'available') {
+                    // Check if it's a number and greater than 0
+                    if (isNaN(row.AvailableAgents) || Number(row.AvailableAgents) <= 0) return false;
+                } else if (responseType === 'unavailable') {
+                    // Check if it's not a number (e.g., "Error") or is 0
+                    if (!isNaN(row.AvailableAgents) && Number(row.AvailableAgents) > 0) return false;
+                }
+                
+                // If it passes all checks, include it
+                return true;
+            });
+
+            $table.bootstrapTable('load', filteredData);
+        }
+
+        function resetAllFilters() {
+            $('#dateStart').val('');
+            $('#dateEnd').val('');
+            $('#responseFilter').val('all');
+            $table.bootstrapTable('load', originalData); // Reload original data
+        }
+    </script>
+
+</body>
+</html>
