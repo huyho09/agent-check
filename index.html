@@ -149,7 +149,8 @@
 
 
     <script>
-        // IMPORTANT: Replace this URL with the raw URL of your result.csv file on GitHub.
+        // *** UPDATED URL ***
+        // This now points to your secure Netlify function instead of the public GitHub URL.
         const CSV_URL = '/.netlify/functions/get-csv';
 
         let originalData = [];
@@ -166,22 +167,22 @@
                 ]
             });
 
-            // Fetch and load data from GitHub
+            // Fetch and load data from the secure function
             loadData();
 
             // --- Event Listeners for Filters ---
             $('#dateStart, #dateEnd, #responseFilter').on('change', applyFilters);
             $('#resetFilters').on('click', resetAllFilters);
+            // Reload data when the Bootstrap Table refresh button is clicked
+            $table.on('refresh.bs.table', function () {
+                loadData();
+            });
         });
 
         function loadData() {
             $loading.show();
-            // Add a cache-busting parameter to the URL to prevent the browser from loading a stale file.
-            const cacheBuster = new Date().getTime();
-            const urlWithCacheBuster = `${CSV_URL}?t=${cacheBuster}`;
-
-            // Use PapaParse to fetch and parse the CSV from the URL
-            Papa.parse(urlWithCacheBuster, {
+            // Use PapaParse to fetch and parse the CSV from our secure function's URL
+            Papa.parse(CSV_URL, {
                 download: true,
                 header: true,
                 skipEmptyLines: true,
@@ -201,7 +202,7 @@
                 },
                 error: function(err, file) {
                     console.error("Error fetching or parsing CSV:", err);
-                    alert("Could not load the data file from GitHub. This can happen due to a network error, or if the repository is private or the URL is incorrect.");
+                    alert("Could not load the data from the server. The Netlify function may have encountered an error.");
                     $loading.hide();
                 }
             });
