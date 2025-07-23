@@ -5,15 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agent Availability Report</title>
 
-    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- Bootstrap Table CSS -->
     <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.22.4/dist/bootstrap-table.min.css">
 
     <style>
@@ -79,7 +76,6 @@
                 <h2 class="card-title">Agent Availability Report</h2>
             </div>
 
-            <!-- Toolbar for Filters -->
             <div id="toolbar">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-4">
@@ -104,75 +100,62 @@
                 </div>
             </div>
             
-            <!-- Loading Indicator -->
             <div id="loading" class="loading-overlay">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
 
-            <!-- Table Container -->
             <div class="table-responsive">
                 <table
                   id="table"
-                  data-toolbar="#toolbar"
                   data-toggle="table"
+                  data-toolbar="#toolbar"
                   data-pagination="true"
                   data-page-size="25"
                   data-page-list="[10, 25, 50, 100, All]"
                   data-search="true"
-                  data-sort-name="Timestamp"
-                  data-sort-order="desc"
                   data-show-refresh="true"
                   data-show-columns="true"
-                  data-show-columns-toggle-all="true"
                   data-show-export="true"
                   data-export-types="['csv', 'txt', 'excel']"
-                  data-mobile-responsive="true"
-                  data-check-on-init="true">
+                  data-mobile-responsive="true">
+                  <thead>
+                    <tr>
+                      <th data-field="Timestamp" data-sortable="true">Timestamp</th>
+                      <th data-field="APIName" data-sortable="true">API Name</th>
+                      <th data-field="AvailableAgents" data-sortable="true" data-align="center">Available Agents</th>
+                    </tr>
+                  </thead>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- jQuery -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-    <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- PapaParse for CSV parsing -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <!-- Bootstrap Table JS -->
     <script src="https://unpkg.com/bootstrap-table@1.22.4/dist/bootstrap-table.min.js"></script>
-    <!-- Bootstrap Table Export extension -->
     <script src="https://unpkg.com/bootstrap-table@1.22.4/dist/extensions/export/bootstrap-table-export.min.js"></script>
     <script src="https://unpkg.com/tableexport.jquery.plugin/tableExport.min.js"></script>
 
 
     <script>
-        // *** UPDATED URL ***
-        // This now points to your secure Netlify function instead of the public GitHub URL.
-        const CSV_URL = '/.netlify/functions/get-csv';
+        const CSV_URL = 'result.csv'; // Pointing to your local CSV file
 
         let originalData = [];
         const $table = $('#table');
         const $loading = $('#loading');
 
         $(function() {
-            // Initialize the table with columns but no data yet.
-            $table.bootstrapTable({
-                columns: [
-                    { field: 'Timestamp', title: 'Timestamp', sortable: true },
-                    { field: 'APIName', title: 'API Name', sortable: true },
-                    { field: 'AvailableAgents', title: 'Available Agents', sortable: true, align: 'center' }
-                ]
-            });
-
-            // Fetch and load data from the secure function
+            // The table is now initialized automatically by the `data-toggle="table"` attribute.
+            // We just need to load the data into it.
             loadData();
 
             // --- Event Listeners for Filters ---
             $('#dateStart, #dateEnd, #responseFilter').on('change', applyFilters);
             $('#resetFilters').on('click', resetAllFilters);
+            
             // Reload data when the Bootstrap Table refresh button is clicked
             $table.on('refresh.bs.table', function () {
                 loadData();
@@ -181,7 +164,7 @@
 
         function loadData() {
             $loading.show();
-            // Use PapaParse to fetch and parse the CSV from our secure function's URL
+            // Use PapaParse to fetch and parse the CSV from the local file path
             Papa.parse(CSV_URL, {
                 download: true,
                 header: true,
@@ -189,6 +172,8 @@
                 complete: function(results) {
                     if (results.data && results.data.length > 0) {
                         originalData = results.data;
+                        // Sort the data by Timestamp descending by default
+                        originalData.sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
                         $table.bootstrapTable('load', originalData);
                     } else if (results.errors && results.errors.length > 0) {
                         console.error("PapaParse errors:", results.errors);
@@ -202,7 +187,7 @@
                 },
                 error: function(err, file) {
                     console.error("Error fetching or parsing CSV:", err);
-                    alert("Could not load the data from the server. The Netlify function may have encountered an error.");
+                    alert("Could not load the data from the local file. Remember to run a local server!");
                     $loading.hide();
                 }
             });
@@ -213,26 +198,20 @@
             const endDate = $('#dateEnd').val();
             const responseType = $('#responseFilter').val();
 
-            // Create date objects for comparison. Add a day to endDate to make it inclusive.
             const start = startDate ? new Date(startDate) : null;
             const end = endDate ? new Date(new Date(endDate).setDate(new Date(endDate).getDate() + 1)) : null;
 
             const filteredData = originalData.filter(row => {
-                // 1. Date Filtering
                 const rowDate = new Date(row.Timestamp);
                 if (start && rowDate < start) return false;
                 if (end && rowDate >= end) return false;
 
-                // 2. Response Filtering
                 if (responseType === 'available') {
-                    // Check if it's a number and greater than 0
                     if (isNaN(row.AvailableAgents) || Number(row.AvailableAgents) <= 0) return false;
                 } else if (responseType === 'unavailable') {
-                    // Check if it's not a number (e.g., "Error") or is 0
                     if (!isNaN(row.AvailableAgents) && Number(row.AvailableAgents) > 0) return false;
                 }
                 
-                // If it passes all checks, include it
                 return true;
             });
 
@@ -243,7 +222,7 @@
             $('#dateStart').val('');
             $('#dateEnd').val('');
             $('#responseFilter').val('all');
-            $table.bootstrapTable('load', originalData); // Reload original data
+            $table.bootstrapTable('load', originalData);
         }
     </script>
 
