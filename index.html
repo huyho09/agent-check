@@ -122,6 +122,7 @@
                   data-mobile-responsive="true">
                   <thead>
                     <tr>
+                      <th data-field="Weekday" data-sortable="true">Weekday</th>
                       <th data-field="Timestamp" data-sortable="true">Timestamp</th>
                       <th data-field="APIName" data-sortable="true">API Name</th>
                       <th data-field="AvailableAgents" data-sortable="true" data-align="center">Available Agents</th>
@@ -171,7 +172,12 @@
                 skipEmptyLines: true,
                 complete: function(results) {
                     if (results.data && results.data.length > 0) {
-                        originalData = results.data;
+                        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                        originalData = results.data.map(row => {
+                            const date = new Date(row.Timestamp);
+                            row.Weekday = days[date.getDay()];
+                            return row;
+                        });
                         // Sort the data by Timestamp descending by default
                         originalData.sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
                         $table.bootstrapTable('load', originalData);
