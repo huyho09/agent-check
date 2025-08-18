@@ -123,7 +123,7 @@
                   <thead>
                     <tr>
                       <th data-field="Weekday" data-sortable="true">Weekday</th>
-                      <th data-field="Timestamp" data-sortable="true" data-formatter="cetTimeFormatter">Timestamp (CET)</th>
+                      <th data-field="Timestamp" data-sortable="true">Timestamp (CET)</th>
                       <th data-field="APIName" data-sortable="true">API Name</th>
                       <th data-field="AvailableAgents" data-sortable="true" data-align="center">Available Agents</th>
                     </tr>
@@ -148,33 +148,33 @@
         const $table = $('#table');
         const $loading = $('#loading');
 
-        /**
-         * Formats a date string into the CET timezone (YYYY-MM-DD HH:mm:ss).
-         * Using 'Europe/Berlin' handles both CET and CEST (daylight saving) automatically.
-         * @param {string} value The input date string (e.g., ISO 8601 format).
-         * @returns {string} The formatted date string in CET/CEST.
-         */
-        function cetTimeFormatter(value) {
-            if (!value) return '';
-            try {
-                const date = new Date(value);
-                // Using 'sv-SE' (Swedish) locale gives a clean YYYY-MM-DD HH:MM:SS format
-                const options = {
-                    timeZone: 'Europe/Berlin', 
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                };
-                return date.toLocaleString('sv-SE', options);
-            } catch (e) {
-                console.error("Could not format date:", value, e);
-                return value; // Return original value if formatting fails
-            }
-        }
+        // /**
+        //  * Formats a date string into the CET timezone (YYYY-MM-DD HH:mm:ss).
+        //  * Using 'Europe/Berlin' handles both CET and CEST (daylight saving) automatically.
+        //  * @param {string} value The input date string (e.g., ISO 8601 format).
+        //  * @returns {string} The formatted date string in CET/CEST.
+        //  */
+        // function cetTimeFormatter(value) {
+        //     if (!value) return '';
+        //     try {
+        //         const date = new Date(value);
+        //         // Using 'sv-SE' (Swedish) locale gives a clean YYYY-MM-DD HH:MM:SS format
+        //         const options = {
+        //             timeZone: 'Europe/Berlin', 
+        //             year: 'numeric',
+        //             month: '2-digit',
+        //             day: '2-digit',
+        //             hour: '2-digit',
+        //             minute: '2-digit',
+        //             second: '2-digit',
+        //             hour12: false
+        //         };
+        //         return date.toLocaleString('sv-SE', options);
+        //     } catch (e) {
+        //         console.error("Could not format date:", value, e);
+        //         return value; // Return original value if formatting fails
+        //     }
+        // }
 
         $(function() {
             // The table is now initialized automatically by the `data-toggle="table"` attribute.
