@@ -7,9 +7,9 @@ on:
     # Run every 15 minutes between 7:30 and 17:30 CET on weekdays (Monday-Friday)
     # Note: Cron times are in UTC. CET is UTC+1/UTC+2 (DST). 
     # This schedule is for UTC+1. You may need to adjust for DST.
-    - cron: '30,45 6 * * 1-5'    # 7:30, 7:45 CET
-    - cron: '*/15 7-15 * * 1-5' # 8:00, 8:15 ... 16:45 CET
-    - cron: '0,15,30 16 * * 1-5'  # 17:00, 17:15, 17:30 CET
+    #- cron: '30,45 6 * * 1-5'    # 7:30, 7:45 CET
+    #- cron: '*/15 7-15 * * 1-5' # 8:00, 8:15 ... 16:45 CET
+    #- cron: '0,15,30 16 * * 1-5'  # 17:00, 17:15, 17:30 CET
   
   # This allows you to run the workflow manually from the GitHub Actions tab.
   workflow_dispatch:
